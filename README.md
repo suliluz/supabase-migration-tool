@@ -31,17 +31,28 @@ A comprehensive CLI tool for bootstrapping, managing, and deploying Supabase pro
 ```bash
 # Clone and install dependencies
 git clone https://github.com/suliluz/supabase-migration-tool.git
+cd supabase-migration-tool
 bun install
 ```
 
-### 📦 Building Standalone Executable
+## 🔨 Building with Bun
 
 You can build a standalone executable that doesn't require the source code or `bun run` to execute:
 
-#### Build with Bun
+### Build Standalone Executable
 ```bash
-# Build a standalone executable
+# Build a cross-platform standalone executable
 bun build index.ts --compile --outfile supabase-bootstrapper
+
+# For specific platforms:
+# Linux
+bun build index.ts --compile --target=bun-linux-x64 --outfile supabase-bootstrapper-linux
+
+# Windows
+bun build index.ts --compile --target=bun-windows-x64 --outfile supabase-bootstrapper.exe
+
+# macOS
+bun build index.ts --compile --target=bun-darwin-x64 --outfile supabase-bootstrapper-macos
 
 # Make it executable (macOS/Linux)
 chmod +x supabase-bootstrapper
@@ -50,334 +61,209 @@ chmod +x supabase-bootstrapper
 ./supabase-bootstrapper --help
 ```
 
-#### Cross-Platform Builds
+The compiled executable includes the Bun runtime and all dependencies, making it completely self-contained.
+
+## 🚀 Quick Start
+
+### 1. Initialize Project Structure
 ```bash
-# Build for different targets
-bun build index.ts --compile --target=bun-linux-x64 --outfile supabase-bootstrapper-linux
-bun build index.ts --compile --target=bun-darwin-x64 --outfile supabase-bootstrapper-macos
-bun build index.ts --compile --target=bun-windows-x64 --outfile supabase-bootstrapper.exe
-```
-
-#### Global Installation
-```bash
-# Build and install globally
-bun build index.ts --compile --outfile supabase-bootstrapper
-sudo mv supabase-bootstrapper /usr/local/bin/
-
-# Now use anywhere
-supabase-bootstrapper init
-supabase-bootstrapper status
-```
-
-**Benefits of standalone executable:**
-- ✅ No need to have the source code locally
-- ✅ No need to run with `bun run index.ts`
-- ✅ Easy distribution to team members
-- ✅ Works on systems without Bun installed (runtime is bundled)
-
-## 🛠 Command Reference
-
-### Project Setup Commands
-
-#### 1. Initialize Project Structure
-```bash
+# Using source code
 bun run index.ts init
-```
-Downloads the latest Supabase Docker setup and creates the project structure with organized SQL folders.
 
-#### 2. Create Configuration Template
+# Using compiled executable
+./supabase-bootstrapper init
+```
+
+### 2. Create Configuration Template
 ```bash
 bun run index.ts create
+# Edit the generated input.json file with your configuration
 ```
-Generates an `input.json` template file for project configuration.
 
-#### 3. Generate Environment
+### 3. Generate Environment File
 ```bash
 bun run index.ts generate -i input.json
 ```
-Creates a `.env` file with secure JWT tokens and database credentials.
 
-### Schema Deployment (postgres/ folder)
-
-#### Deploy Full Schema
+### 4. Start Local Development
 ```bash
-# Deploy combined SQL schema (for initial setup or full rebuilds)
-POSTGRES_HOST=localhost POSTGRES_PORT=5432 POSTGRES_USER=postgres POSTGRES_DB=postgres POSTGRES_PASSWORD=password bun run index.ts deploy
-
-# Using command line options
-bun run index.ts deploy -h localhost -p 5432 -u postgres -d postgres
-```
-**Use Case**: Initial database setup, complete schema rebuilds, or when working with the organized SQL files in `postgres/` folder.
-
-### Migration System (migrations/ folder)
-
-#### Create New Migration
-```bash
-bun run index.ts create-migration -n "add_user_profiles"
-```
-Creates a timestamped migration file: `20250908120000_add_user_profiles.sql`
-
-#### View Migration Status
-```bash
-# Using environment variables (recommended)
-POSTGRES_HOST=localhost POSTGRES_PORT=5432 POSTGRES_USER=postgres POSTGRES_DB=postgres POSTGRES_PASSWORD=password bun run index.ts status
-
-# Using command line options
-bun run index.ts status -h localhost -p 5432 -u postgres -d postgres
+bun run index.ts start
+# Access dashboard at http://localhost:3000
 ```
 
-#### Apply Migrations
-```bash
-# Apply all pending migrations
-POSTGRES_HOST=localhost POSTGRES_PORT=5432 POSTGRES_USER=postgres POSTGRES_DB=postgres POSTGRES_PASSWORD=password bun run index.ts migrate
+## 📋 Commands Reference
 
-# Apply up to specific migration
-bun run index.ts migrate -t "20250908120000_add_user_profiles"
-```
-**Use Case**: Incremental database updates with proper tracking and rollback safety.
+### Project Setup
+| Command | Description |
+|---------|-------------|
+| `init` | Initialize Supabase project structure |
+| `create` | Create input.json template file |
+| `generate -i <file>` | Generate .env from input file |
 
-### Database Operations
-
-#### Test Database Connection
-```bash
-POSTGRES_HOST=localhost POSTGRES_PORT=5432 POSTGRES_USER=postgres POSTGRES_DB=postgres POSTGRES_PASSWORD=password bun run index.ts test-connection
-```
-
-#### Export Database Schema
-```bash
-# Create timestamped schema dump
-POSTGRES_HOST=localhost POSTGRES_PORT=5432 POSTGRES_USER=postgres POSTGRES_DB=postgres POSTGRES_PASSWORD=password bun run index.ts dump-schema
-```
-**Use Case**: Creating baseline snapshots, backups, or capturing existing database state.
+### Database Management
+| Command | Options | Description |
+|---------|---------|-------------|
+| `deploy` | `-h, -p, -u, -d` | Deploy combined SQL schema |
+| `migrate` | `-h, -p, -u, -d, -t` | Apply pending migrations |
+| `create-migration -n <name>` | | Create new migration file |
+| `status` | `-h, -p, -u, -d` | Show migration status |
+| `dump-schema` | `-h, -p, -u, -d` | Export database schema |
+| `test-connection` | `-h, -p, -u, -d` | Test database connectivity |
+| `clean` | `-h, -p, -u, -d, --force, --backup` | Clean database |
 
 ### Local Development
+| Command | Options | Description |
+|---------|---------|-------------|
+| `start` | `-d, --detach` | Start Supabase locally |
+| `stop` | | Stop local Supabase |
 
-#### Start Supabase Locally
+### Database Connection Options
+- `-h, --host <host>` - Database host (default: localhost)
+- `-p, --port <port>` - Database port (default: 5432)
+- `-u, --user <user>` - Database user (default: postgres)
+- `-d, --database <database>` - Database name (default: postgres)
+
+## 🔐 Environment Variables
+
+You can use environment variables instead of command-line options:
+
 ```bash
-# Start in foreground (logs visible)
-bun run index.ts start
+# Set connection variables
+export POSTGRES_HOST=localhost
+export POSTGRES_PORT=5432
+export POSTGRES_USER=postgres
+export POSTGRES_DB=mydatabase
+export POSTGRES_PASSWORD=mypassword
 
-# Start in background (detached mode)
-bun run index.ts start -d
-```
-
-#### Stop Supabase
-```bash
-bun run index.ts stop
-```
-
-## 📋 Complete Workflow Guide
-
-### 🆕 New Project Setup
-```bash
-# 1. Initialize project structure
-bun run index.ts init
-
-# 2. Create configuration template
-bun run index.ts create
-
-# 3. Edit input.json with your project details
-# 4. Generate environment file
-bun run index.ts generate -i input.json
-
-# 5. Start local Supabase
-bun run index.ts start -d
-
-# 6. Deploy initial schema (if you have SQL files in postgres/ folder)
+# Run commands without options
 bun run index.ts deploy
-
-# 7. Access dashboard at http://localhost:3000
-```
-
-### 🔄 Development Workflow
-
-#### Schema-First Development (postgres/ folder)
-```bash
-# 1. Edit SQL files in postgres/ folder (base.sql, functions.sql, etc.)
-# 2. Deploy changes
-bun run index.ts deploy
-
-# 3. Test your changes
-# 4. When satisfied, create migration for production
-bun run index.ts create-migration -n "implement_new_feature"
-# 5. Copy relevant SQL from postgres/ files to migration
-# 6. Apply migration to track the change
-bun run index.ts migrate
-```
-
-#### Migration-First Development (migrations/ folder)
-```bash
-# 1. Create new migration
-bun run index.ts create-migration -n "add_payment_system"
-
-# 2. Edit the migration file with your SQL
-# 3. Check current status
-bun run index.ts status
-
-# 4. Apply migration
-bun run index.ts migrate
-
-# 5. Verify application
-bun run index.ts status
-```
-
-### 🚀 Production Deployment
-```bash
-# 1. Ensure all migrations are created and tested locally
-bun run index.ts status
-
-# 2. Generate production environment
-bun run index.ts generate -i production-input.json
-
-# 3. Deploy to production database
-POSTGRES_HOST=prod-db.company.com \
-POSTGRES_PORT=5432 \
-POSTGRES_USER=app_user \
-POSTGRES_DB=production \
-POSTGRES_PASSWORD=$PROD_PASSWORD \
-bun run index.ts migrate
-
-# 4. Verify deployment
-bun run index.ts status
-```
-
-### 🔄 Schema Synchronization
-```bash
-# If you need to sync an existing database to your project:
-
-# 1. Export current database schema
-bun run index.ts dump-schema
-
-# 2. Review the exported files in migrations/backup_[timestamp]/
-# 3. Create baseline migration if needed
-bun run index.ts create-migration -n "baseline_schema"
-
-# 4. Copy relevant SQL from backup to migration
-# 5. Apply and track
 bun run index.ts migrate
 ```
 
 ## 📁 Project Structure
 
 ```
-your-project/
-├── input.json                     # Configuration template
-├── supabase-project/
-│   ├── .env                      # Generated environment file
-│   ├── docker-compose.yml       # Supabase services
-│   ├── postgres/                 # Organized SQL schema files
-│   │   ├── base.sql             # Basic tables and types
-│   │   ├── constraints.sql      # Foreign keys and constraints
-│   │   ├── data.sql             # Seed data
-│   │   ├── enums.sql            # Enum definitions
-│   │   ├── functions.sql        # Stored procedures
-│   │   ├── genesis.sql          # Initial setup
-│   │   ├── pre.sql              # Pre-migration setup
-│   │   ├── triggers.sql         # Database triggers
-│   │   └── views.sql            # Database views
-│   └── migrations/              # Version-controlled migrations
-│       ├── 20250908120000_add_user_table.sql
-│       ├── 20250908130000_add_indexes.sql
-│       ├── schema-pre.sql       # For migrate command (optional)
-│       ├── schema-post.sql      # For migrate command (optional)
-│       ├── data.sql             # For migrate command (optional)
-│       └── backup_20250908T123456/  # Schema dumps
-│           ├── schema-pre.sql
-│           ├── schema-post.sql
-│           └── data.sql
+supabase-project/
+├── .env                    # Generated environment file
+├── docker-compose.yml      # Docker Compose configuration
+├── postgres/              # Schema files (for deploy command)
+│   ├── base.sql
+│   ├── constraints.sql
+│   ├── data.sql
+│   ├── enums.sql
+│   ├── functions.sql
+│   ├── genesis.sql
+│   ├── pre.sql
+│   ├── triggers.sql
+│   └── views.sql
+└── migrations/            # Migration files (for migrate command)
+    ├── 20240101120000_initial_schema.sql
+    ├── 20240102130000_add_users_table.sql
+    └── backup_20240103140000/
 ```
 
-## 🔧 Configuration
+## 🔄 Migration Workflow
 
-### input.json Template
-```json
-{
-  "siteUrl": "http://localhost:3000",
-  "apiUrl": "http://localhost:8000", 
-  "organization": "My Organization",
-  "project": "My Project",
-  "additionalRedirectUrls": ["http://localhost:3000/callback"],
-  "email": {
-    "from": "noreply@yourapp.com",
-    "host": "smtp.gmail.com",
-    "port": 587,
-    "user": "your-email@gmail.com",
-    "pass": "your-app-password",
-    "senderName": "My App"
-  }
-}
-```
-
-### Environment Variables
+### 1. Schema Deployment (Initial Setup)
+Use the `deploy` command for initial database setup or full rebuilds:
 ```bash
-# Required for database operations
-POSTGRES_HOST=localhost        # Database host
-POSTGRES_PORT=5432            # Database port
-POSTGRES_USER=postgres        # Database user
-POSTGRES_DB=postgres          # Database name
-POSTGRES_PASSWORD=password    # Database password (always from env for security)
+# Edit files in supabase-project/postgres/
+bun run index.ts deploy
 ```
 
-## ⚠️ Disclaimers
+### 2. Incremental Migrations
+Use the migration system for ongoing changes:
+```bash
+# Create a new migration
+bun run index.ts create-migration -n "add_user_profiles_table"
 
-### Important Considerations
+# Edit the generated migration file
+# Apply migrations
+bun run index.ts migrate
 
-**🗄️ Database Operations**
-- This tool performs direct database operations including schema changes, data modifications, and migrations
-- Always test migrations in a development environment before applying to production
-- Create database backups before running migrations on production systems
-- The `deploy` command will overwrite existing database schema - use with caution
+# Check status
+bun run index.ts status
+```
 
-**🔐 Security & Credentials**
-- Database passwords and sensitive information should be stored in environment variables, not in configuration files
-- Generated JWT tokens and API keys are cryptographically secure but should be treated as sensitive data
-- The tool requires elevated database privileges to create/modify schemas and tables
+### 3. Backup Before Changes
+```bash
+# Create backup before major changes
+bun run index.ts dump-schema
 
-**🐳 Docker & Local Development**
-- The `start` and `stop` commands control Docker containers - ensure Docker daemon is running
-- Local Supabase instances will occupy ports 3000, 8000, 5432, and others
-- Stopping containers may result in data loss if not using persistent volumes
+# Clean database if needed (with backup)
+bun run index.ts clean --backup
+```
 
-**📁 File System Operations**
-- The tool creates and modifies files in your project directory
-- Always use version control (Git) to track changes made by this tool
-- Migration files should not be manually edited after being applied to production
+## 🎯 Use Cases
 
-**🌐 Production Deployment**
-- This tool is designed for development and CI/CD environments
-- For critical production systems, consider additional safeguards and approval processes
-- Network connectivity to production databases should be secured and monitored
+### Development Workflow
+1. **Initial Setup**: `init` → `create` → `generate` → `start`
+2. **Schema Changes**: `create-migration` → edit migration → `migrate`
+3. **Testing**: `test-connection` → `status` → `dump-schema`
+
+### Production Deployment
+1. **Prepare**: `deploy` for initial schema
+2. **Migrate**: `migrate` for incremental updates
+3. **Backup**: `dump-schema` before major changes
+
+### Database Management
+1. **Reset**: `clean --backup` → `deploy` → `migrate`
+2. **Status**: `status` → `test-connection`
+3. **Recovery**: Use backup files from `dump-schema`
+
+## ⚠️ Disclaimers and Important Notes
+
+### Production Use Warning
+**⚠️ IMPORTANT: The developer is not responsible for any issues that may arise in production environments. It is the user's responsibility to:**
+
+- **Test thoroughly** in development/staging environments before production use
+- **Create backups** before running any database operations
+- **Validate** all migrations and schema changes
+- **Monitor** database performance and integrity after deployments
+- **Have rollback plans** in case of issues
+
+### Backup Recommendations
+- Always run `dump-schema` before major database operations
+- Test restore procedures with backups regularly
+- Keep multiple backup copies for critical data
+- Use the `--backup` flag with `clean` command when resetting databases
+
+### Security Considerations
+- Keep `POSTGRES_PASSWORD` secure and never commit it to version control
+- Use strong passwords for database connections
+- Limit database user permissions in production
+- Review generated JWT secrets and rotate them regularly
 
 ### Best Practices
+- Test migrations on a copy of production data
+- Use descriptive names for migrations
+- Keep migrations reversible when possible
+- Document complex schema changes
+- Monitor migration execution times
 
-✅ **Always backup production databases before migrations**  
-✅ **Test all migrations in staging environments first**  
-✅ **Use environment variables for sensitive configuration**  
-✅ **Review generated migration files before applying**  
-✅ **Keep migration files in version control**  
-✅ **Monitor database performance after schema changes**
+## 🐛 Troubleshooting
 
-### Liability
+### Common Issues
+1. **Connection Failed**: Check database credentials and network connectivity
+2. **Migration Errors**: Review SQL syntax and database permissions
+3. **Docker Issues**: Ensure Docker is running and ports are available
+4. **Permission Denied**: Check file permissions and Docker socket access
 
-This tool is provided "as is" without warranty. The developer is not responsible for any issues, data loss, or outages that may occur in production environments as a result of using this tool. It is solely the user's responsibility to ensure the safety, correctness, and suitability of all operations performed with this tool. Always test thoroughly and maintain proper backups.
+### Getting Help
+- Check command output for detailed error messages
+- Use `test-connection` to verify database connectivity
+- Review migration status with `status` command
+- Examine generated files in `supabase-project/` directory
 
-### Feedback
+## 📞 Feedback and Support
 
-Feedback, suggestions, and contributions are welcome! Please open an issue or pull request on GitHub.
+**Feedback is welcome!** Please report issues, suggestions, or improvements through:
+- GitHub Issues
+- Pull Requests
+- Feature Requests
 
-## 🤝 Contributing
+Your feedback helps improve this tool for the community.
 
-1. Fork the repository
-2. Create your feature branch
-3. Add tests for new functionality
-4. Submit a pull request
+---
 
-## 📝 License
-
-This project is licensed under the MIT License.
-
-## 🙏 Acknowledgments
-
-- Built on top of [Supabase](https://supabase.com/) Docker setup
-- Uses [Commander.js](https://github.com/tj/commander.js/) for CLI interface
-- Powered by [Bun](https://bun.sh/) runtime
+**Note**: This tool is provided as-is. Users are responsible for ensuring proper testing and validation in their specific environments.

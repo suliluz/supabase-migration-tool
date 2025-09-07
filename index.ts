@@ -219,7 +219,9 @@ const deploy = async (options: any) => {
             console.log(chalk.yellow("It is recommended to pass these as environment variables directly before the command instead, e.g.:"));
             console.log(chalk.yellow("POSTGRES_HOST=localhost POSTGRES_PORT=5432 POSTGRES_USER=postgres POSTGRES_DB=postgres <bootstrappper-app> deploy"));
             return;
-        } else {
+        }
+
+        if (usingEnv) {
             // Check environment variables
             const requiredEnvVars = [
                 'POSTGRES_HOST',
