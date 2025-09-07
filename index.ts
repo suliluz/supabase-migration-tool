@@ -188,7 +188,17 @@ const deploy = async (options: any) => {
         console.log(chalk.blue('Starting deployment...'));
 
         // Compile sql files into one single file
-        const sqlFiles = ['base', 'constraints', 'data', 'enums', 'functions', 'genesis', 'pre', 'triggers', 'views'];
+        const sqlFiles = [
+            'pre',
+            'enums',
+            'base',
+            'constraints',
+            'genesis',
+            'functions',
+            'triggers',
+            'views',
+            'data'
+        ];
         let combinedSql = '';
         for (const file of sqlFiles) {
             const filePath = `supabase-project/postgres/${file}.sql`;
@@ -851,10 +861,10 @@ const cleanDatabase = async (options: any) => {
             console.log(chalk.green('✓ Backup completed'));
         }
 
-        // SQL to clean database
+        // SQL to clean database - using file approach with proper PostgreSQL syntax
         const cleanupSQL = `
--- Drop all tables in public schema (cascading to remove dependencies)
-DO $$ DECLARE
+DO $$ 
+DECLARE
     r RECORD;
 BEGIN
     -- Drop all tables
@@ -881,19 +891,29 @@ BEGIN
     FOR r IN (SELECT typname FROM pg_type WHERE typnamespace = (SELECT oid FROM pg_namespace WHERE nspname = 'public') AND typtype = 'e') LOOP
         EXECUTE 'DROP TYPE IF EXISTS public.' || quote_ident(r.typname) || ' CASCADE';
     END LOOP;
-END $$;
-
--- Reset sequences and other objects
-TRUNCATE TABLE IF EXISTS schema_migrations;
-
--- Notify completion
-SELECT 'Database cleaned successfully' as result;
-        `;
+END $$ LANGUAGE plpgsql;
+        `.trim();
 
         console.log(chalk.blue('🗑️  Dropping all tables, functions, views, and types...'));
 
         try {
-            await $`docker run --rm -e PGPASSWORD=${password} postgres:latest psql -h ${host} -p ${port} -U ${user} -d ${database} -c ${cleanupSQL}`;
+            // Write SQL to a temporary file to avoid shell escaping issues
+            const tempSqlPath = require('path').resolve('temp_cleanup.sql');
+            fs.writeFileSync(tempSqlPath, cleanupSQL);
+
+            // Execute the SQL file
+            await $`docker run --rm -v ${tempSqlPath}:/cleanup.sql -e PGPASSWORD=${password} postgres:latest psql -h ${host} -p ${port} -U ${user} -d ${database} -f /cleanup.sql`;
+
+            // Clean up temporary file
+            fs.unlinkSync(tempSqlPath);
+
+            // Reset migration tracking - handle case where table might not exist
+            try {
+                await $`docker run --rm -e PGPASSWORD=${password} postgres:latest psql -h ${host} -p ${port} -U ${user} -d ${database} -c "DROP TABLE IF EXISTS schema_migrations CASCADE;"`;
+                console.log(chalk.green('✓ Migration tracking table removed'));
+            } catch (error) {
+                console.log(chalk.yellow('⚬ No migration tracking table found to remove'));
+            }
 
             console.log(chalk.green('✓ All database objects have been removed'));
             console.log(chalk.green('✓ Migration tracking has been reset'));
