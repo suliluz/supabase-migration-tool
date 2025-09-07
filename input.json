@@ -1,0 +1,17 @@
+{
+  "siteUrl": "http://localhost:3000",
+  "apiUrl": "http://localhost:8000",
+  "organization": "My Organization",
+  "project": "My Project",
+  "additionalRedirectUrls": [
+    "http://localhost:3000/callback"
+  ],
+  "email": {
+    "from": "",
+    "host": "",
+    "port": 587,
+    "user": "",
+    "pass": "",
+    "senderName": "My App"
+  }
+}
