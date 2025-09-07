@@ -253,10 +253,9 @@ const deploy = async (options: any) => {
 
         // Construct psql command with proper Docker volume mounting
         const absoluteCombinedSqlPath = require('path').resolve(combinedSqlPath);
-        const psqlCommand = `docker run --rm -i -v "${absoluteCombinedSqlPath}:/sql/combined.sql" -e PGPASSWORD="${password}" postgres:latest psql -h ${host} -p ${port} -U ${user} -d ${database} -f /sql/combined.sql`;
 
-        // Run postgres docker container
-        await $`${psqlCommand}`;
+        // Run postgres docker container with proper Bun $ syntax
+        await $`docker run --rm -i -v ${absoluteCombinedSqlPath}:/sql/combined.sql -e PGPASSWORD=${password} postgres:latest psql -h ${host} -p ${port} -U ${user} -d ${database} -f /sql/combined.sql`;
 
         console.log(chalk.green('Deployment completed successfully.'));
     } catch (error) {
