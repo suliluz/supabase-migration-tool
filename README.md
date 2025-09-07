@@ -318,129 +318,52 @@ POSTGRES_DB=postgres          # Database name
 POSTGRES_PASSWORD=password    # Database password (always from env for security)
 ```
 
-## 🔄 Understanding the Two Approaches
+## ⚠️ Disclaimers
 
-### 📁 postgres/ Folder (Schema Deployment)
-- **Purpose**: Organized SQL files for complete schema management
-- **Use Case**: Initial setup, complete rebuilds, organized development
-- **Command**: `deploy`
-- **Files**: `base.sql`, `functions.sql`, `constraints.sql`, etc.
-- **Tracking**: No automatic tracking (for development/rebuilds)
+### Important Considerations
 
-### 📋 migrations/ Folder (Migration System)  
-- **Purpose**: Version-controlled incremental changes
-- **Use Case**: Production deployments, team collaboration, change tracking
-- **Commands**: `create-migration`, `migrate`, `status`
-- **Files**: Timestamped migration files
-- **Tracking**: Automatic tracking with `schema_migrations` table
+**🗄️ Database Operations**
+- This tool performs direct database operations including schema changes, data modifications, and migrations
+- Always test migrations in a development environment before applying to production
+- Create database backups before running migrations on production systems
+- The `deploy` command will overwrite existing database schema - use with caution
 
-## 📊 Migration Status Example
+**🔐 Security & Credentials**
+- Database passwords and sensitive information should be stored in environment variables, not in configuration files
+- Generated JWT tokens and API keys are cryptographically secure but should be treated as sensitive data
+- The tool requires elevated database privileges to create/modify schemas and tables
 
-```
-Migration Status for myapp@localhost:5432
+**🐳 Docker & Local Development**
+- The `start` and `stop` commands control Docker containers - ensure Docker daemon is running
+- Local Supabase instances will occupy ports 3000, 8000, 5432, and others
+- Stopping containers may result in data loss if not using persistent volumes
 
-✓ Applied   20250908120000_create_users_table.sql
-✓ Applied   20250908130000_add_user_indexes.sql
-⚬ Pending   20250908140000_add_payment_system.sql
-⚬ Pending   20250908150000_add_notifications.sql
+**📁 File System Operations**
+- The tool creates and modifies files in your project directory
+- Always use version control (Git) to track changes made by this tool
+- Migration files should not be manually edited after being applied to production
 
-Total: 4 migrations, 2 applied, 2 pending
-```
+**🌐 Production Deployment**
+- This tool is designed for development and CI/CD environments
+- For critical production systems, consider additional safeguards and approval processes
+- Network connectivity to production databases should be secured and monitored
 
-## 🐛 Troubleshooting
+### Best Practices
 
-### Common Issues
+✅ **Always backup production databases before migrations**  
+✅ **Test all migrations in staging environments first**  
+✅ **Use environment variables for sensitive configuration**  
+✅ **Review generated migration files before applying**  
+✅ **Keep migration files in version control**  
+✅ **Monitor database performance after schema changes**
 
-1. **Migration Table Missing**
-   ```bash
-   # The tool automatically creates the schema_migrations table
-   # If issues persist, manually create:
-   CREATE TABLE schema_migrations (
-       version VARCHAR(255) PRIMARY KEY,
-       applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-   );
-   ```
+### Liability
 
-2. **Docker Connection Issues**
-   ```bash
-   # Ensure Docker is running
-   docker --version
-   
-   # Check if containers are accessible
-   docker ps
-   ```
+This tool is provided "as is" without warranty. The developer is not responsible for any issues, data loss, or outages that may occur in production environments as a result of using this tool. It is solely the user's responsibility to ensure the safety, correctness, and suitability of all operations performed with this tool. Always test thoroughly and maintain proper backups.
 
-3. **Permission Errors**
-   ```bash
-   # Check Docker permissions
-   sudo usermod -aG docker $USER
-   ```
+### Feedback
 
-4. **Environment Variable Issues**
-   ```bash
-   # Verify environment variables are set
-   echo $POSTGRES_HOST
-   echo $POSTGRES_PASSWORD
-   
-   # Export if needed
-   export POSTGRES_PASSWORD=your_password
-   ```
-
-## 🤔 When to Use Which Command
-
-| Scenario | Command | Purpose |
-|----------|---------|---------|
-| 🆕 New project setup | `deploy` | Deploy complete schema from postgres/ folder |
-| 🔄 Development iteration | `deploy` | Quick schema updates during development |
-| 📝 Production change | `create-migration` → `migrate` | Tracked incremental updates |
-| 👥 Team collaboration | `migrate` | Apply team members' migrations |
-| 🚀 Production deployment | `migrate` | Safe, tracked production updates |
-| 💾 Backup/snapshot | `dump-schema` | Export current database state |
-| 🔍 Check status | `status` | See which migrations are applied |
-| 🧪 Test connectivity | `test-connection` | Validate database access |
-
-## 🚀 Advanced Usage
-
-### Custom Migration Workflow
-```bash
-# Create feature branch migration
-bun run index.ts create-migration -n "feature_user_profiles"
-
-# Edit migration file
-vim supabase-project/migrations/20250908120000_feature_user_profiles.sql
-
-# Test locally
-bun run index.ts migrate
-bun run index.ts status
-
-# Deploy to staging
-| 🗑️ Reset development DB | `clean` | Drop all tables and start fresh |
-| 🔄 Schema redesign | `clean --backup` | Reset with safety backup |
-| 🤖 Automated testing | `clean --force` | Clean without confirmation prompts |
-POSTGRES_HOST=staging-db bun run index.ts migrate
-
-# Deploy to production
-POSTGRES_HOST=prod-db bun run index.ts migrate
-```
-
-### Team Development Best Practices
-```bash
-# 1. Always check migration status before creating new ones
-bun run index.ts status
-
-# 2. Pull latest migrations from team
-git pull origin main
-
-# 3. Apply any new migrations
-bun run index.ts migrate
-
-# 4. Create your migration
-bun run index.ts create-migration -n "your_feature"
-
-# 5. Test and commit
-bun run index.ts migrate
-git add . && git commit -m "Add migration for feature"
-```
+Feedback, suggestions, and contributions are welcome! Please open an issue or pull request on GitHub.
 
 ## 🤝 Contributing
 
