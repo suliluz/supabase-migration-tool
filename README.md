@@ -30,7 +30,7 @@ A comprehensive CLI tool for bootstrapping, managing, and deploying Supabase pro
 ### Setup
 ```bash
 # Clone and install dependencies
-cd build_scripts
+git clone https://github.com/suliluz/supabase-migration-tool.git
 bun install
 ```
 
